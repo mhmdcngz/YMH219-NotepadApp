@@ -18,6 +18,8 @@ namespace YMH219_NotepadApp
             btnSave.Click += SaveNote_Click;
             btnDelete.Click += DeleteNote_Click;
             mnuDelete.Click += DeleteNote_Click;
+            btnExport.Click += ExportNote_Click;
+            mnuExport.Click += ExportNote_Click;
         }
 
         private void MainForm_Load(object? sender, EventArgs e)
@@ -187,9 +189,40 @@ namespace YMH219_NotepadApp
             Close();
         }
 
-        private void txtOlarakDışaAktarToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ExportNote_Click(object? sender, EventArgs e)
         {
+            if (lstNotes.SelectedItem is not Note note)
+            {
+                MessageBox.Show("Dışa aktarmak için önce listeden bir not seçin.", "Not seçilmedi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
+            using SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Title = "Notu .txt olarak dışa aktar";
+            dialog.Filter = "Metin dosyası (*.txt)|*.txt";
+            dialog.FileName = MakeSafeFileName(note.Title) + ".txt";
+
+            if (dialog.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            try
+            {
+                storage.ExportToText(note, dialog.FileName);
+                SetStatus("Not dışa aktarıldı: " + dialog.FileName);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                MessageBox.Show("Dosya yazılamadı:\n" + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                SetStatus("Dışa aktarma başarısız oldu.");
+            }
+        }
+
+        private static string MakeSafeFileName(string title)
+        {
+            string safe = string.Join("_", title.Split(Path.GetInvalidFileNameChars()));
+            return string.IsNullOrWhiteSpace(safe) ? "not" : safe;
         }
     }
 }

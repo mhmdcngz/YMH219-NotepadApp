@@ -76,5 +76,18 @@ namespace YMH219_NotepadApp
 
             File.Move(tempPath, FilePath, overwrite: true);
         }
+
+        public void ExportToText(Note note, string path)
+        {
+            using (StreamWriter writer = new StreamWriter(path))
+            {
+                writer.WriteLine(note.Title);
+                writer.WriteLine(new string('=', Math.Max(note.Title.Length, 10)));
+                writer.WriteLine("Oluşturulma: " + note.CreatedAt.ToString("dd.MM.yyyy HH:mm"));
+                writer.WriteLine("Son düzenleme: " + note.UpdatedAt.ToString("dd.MM.yyyy HH:mm"));
+                writer.WriteLine();
+                writer.Write(note.Content);
+            }
+        }
     }
 }

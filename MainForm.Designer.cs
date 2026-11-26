@@ -95,7 +95,6 @@
             mnuExport.ShortcutKeys = Keys.Control | Keys.E;
             mnuExport.Size = new Size(223, 22);
             mnuExport.Text = ".txt Olarak Dışa Aktar";
-            mnuExport.Click += txtOlarakDışaAktarToolStripMenuItem_Click;
             // 
             // toolStripMenuItem2
             // 
