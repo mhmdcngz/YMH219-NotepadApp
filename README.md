@@ -37,26 +37,39 @@ dotnet run
 
 ## Temel Özellikler
 
-- **Not ekleme, listeleme, düzenleme, silme:** Notlar sol taraftaki listede başlıklarıyla görünür. Seçilen notun başlığı ve içeriği sağ tarafta düzenlenebilir.
-- **Tarih bilgisi:** Her notun oluşturulma ve son düzenlenme tarihi tutulur ve gösterilir.
+- **Not ekleme, listeleme, düzenleme, silme:** Notlar sol taraftaki listede başlıklarıyla görünür. Liste, son düzenlenen not en üstte olacak şekilde sıralanır. Seçilen notun başlığı ve içeriği sağ tarafta düzenlenebilir.
+- **Tarih bilgisi:** Her notun oluşturulma ve son düzenlenme tarihi tutulur ve seçilen notun altında gösterilir.
 - **Kalıcı kayıt (JSON):** Notlar `%AppData%\YMH219-NotepadApp\notes.json` dosyasına serileştirilir ve açılışta otomatik yüklenir.
-- **Otomatik kaydetme:** Ekleme, düzenleme ve silme işlemlerinden sonra notlar dosyaya kendiliğinden yazılır.
-- **.txt olarak dışa aktarma:** Seçilen not, başlığı, tarihleri ve içeriğiyle birlikte düz metin dosyası olarak kaydedilebilir.
-- **Arama:** Notlar başlığa veya içeriğe göre filtrelenebilir.
+- **Otomatik kaydetme:** Ekleme, düzenleme ve silme işlemlerinden sonra notlar dosyaya kendiliğinden yazılır. Dosya önce geçici bir `.tmp` dosyasına yazılıp sonra asıl dosyanın yerine taşınır. Böylece yazma yarıda kesilirse asıl dosya bozulmaz.
+- **.txt olarak dışa aktarma:** Seçilen not, başlığı, tarihleri ve içeriğiyle birlikte düz metin dosyası olarak kaydedilebilir. Dosya adı olarak notun başlığı önerilir.
+- **Arama:** Arama kutusuna yazıldıkça notlar başlığa veya içeriğe göre filtrelenir. Arama büyük/küçük harfe duyarlı değildir.
 - **Hata yönetimi:**
   - Kayıt dosyası yoksa uygulama boş bir listeyle açılır.
   - Dosya bozuksa (geçersiz JSON) kullanıcıya bilgi verilir. Bozuk dosya `notes.json.bak` adıyla yedeklenir ve uygulama boş listeyle devam eder.
-  - Okuma veya yazma hataları (izin, kilitli dosya vb.) kullanıcıya mesajla bildirilir.
-- **Geri bildirim:** Yapılan işlemlerin sonucu durum çubuğunda gösterilir.
+  - Okuma veya yazma hataları (izin, kilitli dosya vb.) kullanıcıya mesajla bildirilir, uygulama kapanmaz.
+  - Başlıksız not kaydedilemez. Not seçilmeden silme veya dışa aktarma yapılmak istenirse uyarı verilir.
+  - Silmeden önce onay istenir.
+- **Geri bildirim:** Yapılan işlemlerin sonucu durum çubuğunda saatiyle birlikte gösterilir.
+
+## Kullanım
+
+| İşlem | Nasıl yapılır |
+|---|---|
+| Yeni not | **Yeni** butonu veya **Dosya → Yeni Not** (Ctrl+N). Başlık ve içeriği yazıp **Kaydet**'e basın. |
+| Düzenleme | Listeden notu seçin, başlığı veya içeriği değiştirip **Kaydet**'e basın. |
+| Silme | Notu seçip **Sil** butonu veya **Düzen → Notu Sil**. |
+| Dışa aktarma | Notu seçip **.txt Dışa Aktar** butonu veya **Dosya → .txt Olarak Dışa Aktar** (Ctrl+E). |
+| Arama | Sol üstteki arama kutusuna yazın. Kutuyu temizleyince tüm notlar geri gelir. |
 
 ## Proje Yapısı
 
 | Dosya | Görevi |
 |---|---|
-| `Note.cs` | Not modeli: `Id`, `Title`, `Content`, `CreatedAt`, `UpdatedAt` |
-| `NoteStorage.cs` | Notları JSON dosyasına kaydetme/yükleme ve hata yönetimi |
-| `MainForm.cs` | Arayüz ve olay işleyicileri (ekle, sil, kaydet, dışa aktar, ara) |
-| `Program.cs` | Uygulamanın giriş noktası |
+| `Note.cs` | Not modeli: `Id`, `Title`, `Content`, `CreatedAt`, `UpdatedAt`. Düzenleme `Update()` metoduyla yapılır, böylece düzenlenme tarihi her seferinde güncellenir. |
+| `NoteStorage.cs` | Notları JSON dosyasına kaydetme (`Save`), dosyadan yükleme (`Load`), bozuk dosya kontrolü ve notu .txt olarak yazma (`ExportToText`). `StreamReader`/`StreamWriter` kullanır. |
+| `MainForm.cs` | Arayüzün olay işleyicileri: listeleme, ekleme, düzenleme, silme, dışa aktarma, arama ve hata mesajları. |
+| `MainForm.Designer.cs` | Visual Studio Designer'ın oluşturduğu arayüz kodu (menü, liste, metin kutuları, butonlar, durum çubuğu). |
+| `Program.cs` | Uygulamanın giriş noktası. |
 
 Notlar bellekte `List<Note>` koleksiyonunda tutulur. Dosya işlemleri arayüzden ayrı bir sınıfta (`NoteStorage`) yapılır, böylece form yalnızca kullanıcı etkileşimiyle ilgilenir.
 
@@ -75,10 +88,12 @@ Notlar bellekte `List<Note>` koleksiyonunda tutulur. Dosya işlemleri arayüzden
 - Notlar yalnızca düz metin olarak saklanır. Kalın, italik gibi biçimlendirme desteği yok.
 - Kategori/etiket desteği yok.
 - Tüm notlar tek bir JSON dosyasında tutulur. Çok sayıda notta her kayıtta dosyanın tamamı yeniden yazılır.
+- Bir notta değişiklik yapıp **Kaydet**'e basmadan başka bir not seçilirse yapılan değişiklik kaybolur. Uygulama bu durumda uyarı vermez.
+- Arama açıkken düzenlenen not artık aramaya uymuyorsa kaydedildikten sonra listeden gizlenir. Arama kutusu temizlenince tekrar görünür.
 - Aynı anda birden fazla uygulama penceresi açılırsa son kaydeden pencerenin verisi geçerli olur.
 - Uygulama yalnızca Windows'ta çalışır (Windows Forms).
 
-**Olası geliştirmeler:** kategori/etiket, RichTextBox ile biçimlendirme, notları tarihe göre sıralama, tüm notları tek seferde dışa aktarma.
+**Olası geliştirmeler:** kaydedilmemiş değişiklik uyarısı, Ctrl+S ile kaydetme, kategori/etiket, RichTextBox ile biçimlendirme, tüm notları tek seferde dışa aktarma.
 
 ## Geliştirici
 
