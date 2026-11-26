@@ -6,14 +6,14 @@
         public string Title { get; set; } = "";
         public string Content { get; set; } = "";
         public DateTime CreatedAt { get; set; }
-        public DateTime UpdateAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
 
         public Note()
         {
             Id = Guid.NewGuid();
             CreatedAt = DateTime.Now;
-            UpdateAt = CreatedAt;
+            UpdatedAt = CreatedAt;
         }
 
         public Note(string title, string content) : this()
@@ -27,7 +27,7 @@
             Title = title;
             Content = content;
 
-            UpdateAt = DateTime.Now;
+            UpdatedAt = DateTime.Now;
         }
 
         public override string ToString()
