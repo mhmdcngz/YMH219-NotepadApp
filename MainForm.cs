@@ -20,6 +20,7 @@ namespace YMH219_NotepadApp
             mnuDelete.Click += DeleteNote_Click;
             btnExport.Click += ExportNote_Click;
             mnuExport.Click += ExportNote_Click;
+            txtSearch.TextChanged += TxtSearch_TextChanged;
         }
 
         private void MainForm_Load(object? sender, EventArgs e)
@@ -64,8 +65,29 @@ namespace YMH219_NotepadApp
             }
         }
 
+        private static bool MatchesFilter(Note note, string filter)
+        {
+            return note.Title.Contains(filter, StringComparison.CurrentCultureIgnoreCase)
+                || note.Content.Contains(filter, StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        private void TxtSearch_TextChanged(object? sender, EventArgs e)
+        {
+            RefreshList();
+
+            if (txtSearch.Text.Trim() == "")
+            {
+                SetStatus("Tüm notlar gösteriliyor (" + notes.Count + ").");
+            }
+            else
+            {
+                SetStatus(lstNotes.Items.Count + " not bulundu.");
+            }
+        }
+
         private void NewNote_Click(object? sender, EventArgs e)
         {
+            txtSearch.Clear();
             lstNotes.ClearSelected();
             ClearEditor();
             txtTitle.Focus();
@@ -140,14 +162,19 @@ namespace YMH219_NotepadApp
             lstNotes.BeginUpdate();
             lstNotes.Items.Clear();
 
+            string filter = txtSearch.Text.Trim();
+
             foreach (Note note in notes.OrderByDescending(n => n.UpdatedAt))
             {
-                lstNotes.Items.Add(note);
+                if (filter == "" || MatchesFilter(note, filter))
+                {
+                    lstNotes.Items.Add(note);
+                }
             }
 
             lstNotes.EndUpdate();
 
-            if (noteToSelect != null)
+            if (noteToSelect != null && lstNotes.Items.Contains(noteToSelect))
             {
                 lstNotes.SelectedItem = noteToSelect;
             }
